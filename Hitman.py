@@ -125,13 +125,13 @@ def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, pr
 
 def get_current_values(file_path):
     """
-    Retrieves the current values of level, money, and prestige rank from a JSON file.
+    Retrieves the current values of level, xp, money, and prestige rank from a JSON file.
 
     Args:
         file_path (str): The path to the JSON file.
 
     Returns:
-        tuple: A tuple containing the current level, money, and prestige rank.
+        tuple: A tuple containing the current level, xp, money, and prestige rank.
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -141,37 +141,43 @@ def get_current_values(file_path):
             data = json.loads(raw_data)
 
         def find_values(obj):
-            level, money, prestige_rank = None, None, None
+            level, xp, money, prestige_rank = None, None, None, None
             if isinstance(obj, dict):
                 if "ProfileLevel" in obj:
                     level = obj["ProfileLevel"]
+                if "PlayerProfileXP" in obj:
+                    if "Total" in obj["PlayerProfileXP"]:
+                        xp = obj["PlayerProfileXP"]["Total"]
                 if "MyMoney" in obj:
                     money = obj["MyMoney"]
                 if "PrestigeRank" in obj:
                     prestige_rank = obj["PrestigeRank"]
                 for value in obj.values():
                     if isinstance(value, (dict, list)):
-                        sub_level, sub_money, sub_rank = find_values(value)
+                        sub_level, sub_xp, sub_money, sub_rank = find_values(value)
                         level = level or sub_level
+                        xp = xp or sub_xp
                         money = money or sub_money
                         prestige_rank = prestige_rank or sub_rank
             elif isinstance(obj, list):
                 for item in obj:
-                    sub_level, sub_money, sub_rank = find_values(item)
+                    sub_level, sub_xp, sub_money, sub_rank = find_values(item)
                     level = level or sub_level
+                    xp = xp or sub_xp
                     money = money or sub_money
                     prestige_rank = prestige_rank or sub_rank
-            return level, money, prestige_rank
+            return level, xp, money, prestige_rank
 
-        level, money, prestige_rank = find_values(data)
+        level, xp, money, prestige_rank = find_values(data)
         return (
             f"{level:,}" if isinstance(level, (int, float)) else "N/A",
+            f"{xp:,}" if isinstance(xp, (int, float)) else "N/A",
             f"{money:,}" if isinstance(money, (int, float)) else "N/A",
             f"{prestige_rank:,}" if isinstance(prestige_rank, (int, float)) else "N/A",
         )
     except Exception as e:
         console.print(f"[red]Error reading current values: {str(e)}[/red]")
-        return None, None, None
+        return None, None, None, None
 
 
 def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None):
@@ -550,7 +556,7 @@ def main():
 
         elif choice == "5":
             os.system('cls' if os.name == 'nt' else 'clear')
-            level, money, prestige_rank = get_current_values(file_path)
+            level, xp, money, prestige_rank = get_current_values(file_path)
             if level is not None:
                 header = Panel(
                     "[bold cyan]Hitman Profile Editor[/bold cyan]",
@@ -563,6 +569,7 @@ def main():
                 table.add_column("Attribute", style="cyan", justify="center")
                 table.add_column("Value", style="yellow", justify="center")
                 table.add_row("Level", str(level))
+                table.add_row("XP", str(xp))
                 table.add_row("Money", str(money))
                 table.add_row("Prestige Rank", str(prestige_rank))
                 console.print(table, justify="center")

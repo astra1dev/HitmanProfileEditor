@@ -1,6 +1,7 @@
 # Credits to Cry4pt (On Discord)
 # Open Sourced Malware
 # Hitman 1/2/3 Profile Editor - (Peacock Needed)
+# Credits To astra1dev (On Github) For Pull Request
 
 from rich.console import Console
 from rich.table import Table

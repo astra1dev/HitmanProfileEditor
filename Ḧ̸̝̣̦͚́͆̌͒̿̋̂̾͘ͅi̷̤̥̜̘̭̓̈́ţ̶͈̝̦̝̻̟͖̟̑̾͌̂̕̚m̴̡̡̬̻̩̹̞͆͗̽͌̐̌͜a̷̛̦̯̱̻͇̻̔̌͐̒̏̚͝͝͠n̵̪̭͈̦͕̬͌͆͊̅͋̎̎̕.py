@@ -83,22 +83,14 @@ def format_json_file(file_path):
         return False
 
 
-def calculate_hitman_xp(target_level):
+XP_PER_LEVEL = 6000  # Define the XP required for each level
+
+def calculate_hitman_xp(target_level: int) -> int:
     """
-    Calculates the total XP required to reach a given level in Hitman.
-
-    Args:
-        target_level (int): The target level to calculate XP for.
-
-    Returns:
-        int: The total XP required to reach the target level.
+    Calculates the required XP for the given level based on XP_PER_LEVEL.
+    Minimum XP returned is 0.
     """
-    REFERENCE_LEVEL = 16
-    REFERENCE_XP = 95302
-    xp_per_level = REFERENCE_XP / REFERENCE_LEVEL
-    total_xp = xp_per_level * target_level
-    return int(total_xp)
-
+    return max(0, (target_level - 1) * XP_PER_LEVEL)
 
 def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, prestige_rank=None):
     """

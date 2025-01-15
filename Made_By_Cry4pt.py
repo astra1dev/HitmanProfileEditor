@@ -13,6 +13,10 @@ import time
 import ctypes
 from pathlib import Path
 
+# Set the TERM environment variable if not already set
+if 'TERM' not in os.environ:
+    os.environ['TERM'] = 'xterm-256color'
+
 console = Console()
 
 try:
@@ -20,6 +24,7 @@ try:
         ctypes.windll.kernel32.SetConsoleTitleW("Created By Cry4pt")
 except Exception:
     pass
+
 
 def find_profile_directory():
     """
@@ -47,6 +52,7 @@ def find_profile_directory():
 
     return None
 
+
 def format_json_file(file_path):
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
@@ -64,12 +70,14 @@ def format_json_file(file_path):
         console.print(f"[red]Error: {str(e)}[/red]")
         return False
 
+
 def calculate_hitman_xp(target_level):
     REFERENCE_LEVEL = 16
     REFERENCE_XP = 95302
     xp_per_level = REFERENCE_XP / REFERENCE_LEVEL
     total_xp = xp_per_level * target_level
     return int(total_xp)
+
 
 def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, prestige_rank=None):
     if isinstance(obj, dict):
@@ -90,6 +98,7 @@ def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, pr
     elif isinstance(obj, list):
         for item in obj:
             find_and_replace_in_json(item, new_level, new_xp, my_money, prestige_rank)
+
 
 def get_current_values(file_path):
     try:
@@ -151,9 +160,9 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
             json.dump(data, file, indent=2)
 
         os.system('cls' if os.name == 'nt' else 'clear')  # Added compatibility for non-Windows systems
-        
+
         header = Panel(
-            "[bold cyan]Hitman 3 Profile Editor[/bold cyan]",
+            "[bold cyan]Hitman Profile Editor[/bold cyan]",
             expand=False,
             border_style="bold green"
         )
@@ -178,7 +187,10 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
 
         # Center the "Press Enter" prompt
         prompt_message = "[bold cyan]                       Press Enter To Go Back [/bold cyan]"
-        console_width = os.get_terminal_size().columns
+        try:
+            console_width = os.get_terminal_size().columns
+        except OSError:
+            console_width = 80
         prompt_length = len(prompt_message)
         padding = (console_width - prompt_length) // 2
 
@@ -189,12 +201,13 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
     except Exception as e:
         return False, f"[red]Error: {str(e)}[/red]"
 
+
 def display_input_prompt(title, prompt_text, file_path, value_type):
-    os.system('cls')
-    
+    os.system('cls' if os.name == 'nt' else 'clear')
+
     # Get current values
     current_level, current_money, current_prestige = get_current_values(file_path)
-    
+
     # Determine which current value to show based on value_type
     current_value = ""
     if value_type == "level":
@@ -203,30 +216,33 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
         current_value = current_money
     elif value_type == "prestige":
         current_value = current_prestige
-    
+
     header = Panel(
-        "[bold cyan]Hitman 3 Profile Editor[/bold cyan]",
+        "[bold cyan]Hitman Profile Editor[/bold cyan]",
         expand=False,
         border_style="bold green"
     )
     console.print(header, justify="center")
-    
+
     # Create input table
     table = Table(title=f"[bold yellow]{title}[/bold yellow]", show_header=True, header_style="bold magenta")
     table.add_column("Input Required", style="cyan", justify="center")
     table.add_column("Current Value", style="yellow", justify="center")
     table.add_row(prompt_text, str(current_value))
     console.print(table, justify="center")
-    
+
     # Add spacing
     console.print("\n", end="")
-    
+
     # Center the input prompt
     prompt_message = "[bold cyan]                 Enter Value[/bold cyan]"
-    console_width = os.get_terminal_size().columns
+    try:
+        console_width = os.get_terminal_size().columns
+    except OSError:
+        console_width = 80
     prompt_length = len(prompt_message)
     padding = (console_width - prompt_length) // 2
-    
+
     console.print(" " * padding + prompt_message, end="")
     return Prompt.ask("", default="0")
 
@@ -234,45 +250,45 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
 def display_multi_input_prompt(file_path, completed_inputs=None):
     if completed_inputs is None:
         completed_inputs = {}
-    
-    os.system('cls')
-    
+
+    os.system('cls' if os.name == 'nt' else 'clear')
+
     # Get current values
     current_level, current_money, current_prestige = get_current_values(file_path)
-    
+
     header = Panel(
-        "[bold cyan]Hitman 3 Profile Editor[/bold cyan]",
+        "[bold cyan]Hitman Profile Editor[/bold cyan]",
         expand=False,
         border_style="bold green"
     )
     console.print(header, justify="center")
-    
+
     # Create table showing all current and input values
     table = Table(title="[bold yellow]Current Values[/bold yellow]", show_header=True, header_style="bold magenta")
     table.add_column("Attribute", style="cyan", justify="center")
     table.add_column("Current Value", style="yellow", justify="center")
     table.add_column("New Value", style="green", justify="center")
-    
+
     # Add rows for all values
     table.add_row(
-        "Level", 
+        "Level",
         str(current_level),
         str(completed_inputs.get('level', ''))
     )
     table.add_row(
-        "Money", 
+        "Money",
         str(current_money),
         str(completed_inputs.get('money', ''))
     )
     table.add_row(
-        "Prestige Rank", 
+        "Prestige Rank",
         str(current_prestige),
         str(completed_inputs.get('prestige', ''))
     )
-    
+
     console.print(table, justify="center")
     console.print("\n", end="")
-    
+
     # Determine which input to show
     if 'level' not in completed_inputs:
         prompt_text = "[bold cyan]              Enter New Level[/bold cyan]"
@@ -286,12 +302,16 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
         return None
 
     # Center the input prompt
-    console_width = os.get_terminal_size().columns
+    try:
+        console_width = os.get_terminal_size().columns
+    except OSError:
+        console_width = 80
     prompt_length = len(prompt_text)
     padding = (console_width - prompt_length) // 2
-    
+
     console.print(" " * padding + prompt_text, end="")
     return Prompt.ask("", default="0")
+
 
 def main():
     file_path = None
@@ -305,7 +325,8 @@ def main():
                 file_path = os.path.join(directory, filename)
                 break
     else:
-        console.print("[red]Unable to find the directory 'Peacock\\userdata\\users'. Please specify the file path manually.[/red]")
+        console.print(
+            "[red]Unable to find the directory 'Peacock\\userdata\\users'. Please specify the file path manually.[/red]")
         file_path = Prompt.ask(
             "[bold cyan]Enter the path to your profile JSON file:[/bold cyan]",
             default="userdata.json"
@@ -318,12 +339,12 @@ def main():
         return
 
     while True:
-        os.system('cls')
+        os.system('cls' if os.name == 'nt' else 'clear')
         console.clear()
 
         # Render a centered header using Rich
         header = Panel(
-            "[bold cyan]Hitman 3 Profile Editor[/bold cyan]",
+            "[bold cyan]Hitman Profile Editor[/bold cyan]",
             expand=False,
             border_style="bold green"
         )
@@ -349,7 +370,10 @@ def main():
 
         # Calculate the padding to center the input prompt
         prompt_message = "[bold cyan]Enter your choice[/bold cyan]"
-        console_width = os.get_terminal_size().columns
+        try:
+            console_width = os.get_terminal_size().columns
+        except OSError:
+            console_width = 80
         prompt_length = len(prompt_message)
         padding = (console_width - prompt_length) // 2
 
@@ -360,7 +384,7 @@ def main():
         choice = Prompt.ask("", choices=["1", "2", "3", "4", "5", "6", "7"], default="")
 
         if choice == "7":
-            os.system('cls')
+            os.system('cls' if os.name == 'nt' else 'clear')
             break
 
         elif choice == "1":
@@ -387,7 +411,8 @@ def main():
                 console.print("[bold red]Invalid input for money amount. Please enter a valid number.[/bold red]")
 
         elif choice == "3":
-            prestige_rank_input = display_input_prompt("Prestige Rank Editor", "Enter Prestige Rank", file_path, "prestige")
+            prestige_rank_input = display_input_prompt("Prestige Rank Editor", "Enter Prestige Rank", file_path,
+                                                       "prestige")
             try:
                 prestige_rank = int(prestige_rank_input)
                 success, message = update_profile(file_path, prestige_rank=prestige_rank)
@@ -398,7 +423,7 @@ def main():
 
         elif choice == "4":
             completed_inputs = {}
-    
+
             # Get level input
             while True:
                 new_level_input = display_multi_input_prompt(file_path, completed_inputs)
@@ -445,29 +470,30 @@ def main():
 
             if all(key in completed_inputs for key in ['level', 'money', 'prestige']):
                 success, message = update_profile(
-                    file_path, 
-                    new_level=int(new_level_input), 
-                    my_money=int(my_money_input), 
+                    file_path,
+                    new_level=int(new_level_input),
+                    my_money=int(my_money_input),
                     prestige_rank=int(prestige_rank_input)
                 )
                 if not success:
                     console.print(message)
 
         elif choice == "6":
-            os.system('cls')
+            os.system('cls' if os.name == 'nt' else 'clear')
             format_json_file(file_path)
 
         elif choice == "5":
-            os.system('cls')
+            os.system('cls' if os.name == 'nt' else 'clear')
             level, money, prestige_rank = get_current_values(file_path)
             if level is not None:
                 header = Panel(
-                    "[bold cyan]Hitman 3 Profile Editor[/bold cyan]",
+                    "[bold cyan]Hitman Profile Editor[/bold cyan]",
                     expand=False,
                     border_style="bold green"
                 )
                 console.print(header, justify="center")
-                table = Table(title="[bold yellow]Current Values[/bold yellow]", show_header=True, header_style="bold magenta")
+                table = Table(title="[bold yellow]Current Values[/bold yellow]", show_header=True,
+                              header_style="bold magenta")
                 table.add_column("Attribute", style="cyan", justify="center")
                 table.add_column("Value", style="yellow", justify="center")
                 table.add_row("Level", str(level))
@@ -476,19 +502,23 @@ def main():
                 console.print(table, justify="center")
             else:
                 console.print("[bold red]Failed to retrieve values.[/bold red]")
-            
+
             # Add an empty line above the prompt
             console.print("\n", end="")
 
             # Calculate the padding to center the input prompt
             prompt_message = "[bold cyan]                       Press Enter To Go Back [/bold cyan]"
-            console_width = os.get_terminal_size().columns
+            try:
+                console_width = os.get_terminal_size().columns
+            except OSError:
+                console_width = 80
             prompt_length = len(prompt_message)
             padding = (console_width - prompt_length) // 2
 
             # Print the prompt with calculated padding, and the input field right after it
             console.print(" " * padding + prompt_message, end="")
             console.input()
+
 
 if __name__ == "__main__":
     main()

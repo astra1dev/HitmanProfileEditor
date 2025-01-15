@@ -30,6 +30,9 @@ def find_profile_directory():
     """
     Automatically searches for the directory 'Peacock\\userdata\\users'
     across common locations like all drives, Desktop, and Downloads.
+
+    Returns:
+        str: The path to the found directory or None if not found.
     """
     # Common base directories to search
     search_locations = [
@@ -54,6 +57,15 @@ def find_profile_directory():
 
 
 def format_json_file(file_path):
+    """
+    Formats a JSON file to have a consistent indentation.
+
+    Args:
+        file_path (str): The path to the JSON file to format.
+
+    Returns:
+        bool: True if the file was formatted successfully, False otherwise.
+    """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             raw_data = file.read()
@@ -72,6 +84,15 @@ def format_json_file(file_path):
 
 
 def calculate_hitman_xp(target_level):
+    """
+    Calculates the total XP required to reach a given level in Hitman.
+
+    Args:
+        target_level (int): The target level to calculate XP for.
+
+    Returns:
+        int: The total XP required to reach the target level.
+    """
     REFERENCE_LEVEL = 16
     REFERENCE_XP = 95302
     xp_per_level = REFERENCE_XP / REFERENCE_LEVEL
@@ -80,6 +101,16 @@ def calculate_hitman_xp(target_level):
 
 
 def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, prestige_rank=None):
+    """
+    Recursively finds and replaces values in a JSON object.
+
+    Args:
+        obj (dict or list): The JSON object to modify.
+        new_level (int, optional): The new level to set.
+        new_xp (int, optional): The new XP to set.
+        my_money (int, optional): The new money amount to set.
+        prestige_rank (int, optional): The new prestige rank to set.
+    """
     if isinstance(obj, dict):
         for key, value in obj.items():
             if key == "ProfileLevel" and isinstance(value, (int, float)) and new_level is not None:
@@ -101,6 +132,15 @@ def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, pr
 
 
 def get_current_values(file_path):
+    """
+    Retrieves the current values of level, money, and prestige rank from a JSON file.
+
+    Args:
+        file_path (str): The path to the JSON file.
+
+    Returns:
+        tuple: A tuple containing the current level, money, and prestige rank.
+    """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             raw_data = file.read()
@@ -143,6 +183,18 @@ def get_current_values(file_path):
 
 
 def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None):
+    """
+    Updates the profile JSON file with new values for level, money, and prestige rank.
+
+    Args:
+        file_path (str): The path to the JSON file.
+        new_level (int, optional): The new level to set.
+        my_money (int, optional): The new money amount to set.
+        prestige_rank (int, optional): The new prestige rank to set.
+
+    Returns:
+        tuple: A tuple containing a boolean indicating success and a message.
+    """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             raw_data = file.read()
@@ -203,6 +255,18 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
 
 
 def display_input_prompt(title, prompt_text, file_path, value_type):
+    """
+    Displays an input prompt for the user to enter a new value.
+
+    Args:
+        title (str): The title of the prompt.
+        prompt_text (str): The text to display in the prompt.
+        file_path (str): The path to the JSON file.
+        value_type (str): The type of value being prompted for (level, money, prestige).
+
+    Returns:
+        str: The user input.
+    """
     os.system('cls' if os.name == 'nt' else 'clear')
 
     # Get current values
@@ -248,6 +312,16 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
 
 
 def display_multi_input_prompt(file_path, completed_inputs=None):
+    """
+    Displays a multi-input prompt for the user to enter multiple values.
+
+    Args:
+        file_path (str): The path to the JSON file.
+        completed_inputs (dict, optional): A dictionary of already completed inputs.
+
+    Returns:
+        str: The user input or None if all inputs are completed.
+    """
     if completed_inputs is None:
         completed_inputs = {}
 

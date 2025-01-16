@@ -420,7 +420,6 @@ def main():
         os.system('cls' if os.name == 'nt' else 'clear')
         console.clear()
 
-        # Render a centered header using Rich
         header = Panel(
             "[bold cyan]Hitman Profile Editor[/bold cyan]",
             expand=False,
@@ -428,7 +427,6 @@ def main():
         )
         console.print(header, justify="center")
 
-        # Create and display the menu table
         table = Table(title="[bold yellow]Options[/bold yellow]", show_header=True, header_style="bold magenta")
         table.add_column("Choice", style="cyan", justify="center")
         table.add_column("Action", style="yellow")
@@ -443,25 +441,25 @@ def main():
         table.add_row("8", "Exit")
 
         console.print(table, justify="center")
-
-        # Add an empty line above the prompt
         console.print("\n", end="")
 
-        # Calculate the padding to center the input prompt
-        prompt_message = "[bold cyan]Enter your choice[/bold cyan]"
         try:
             console_width = os.get_terminal_size().columns
         except OSError:
             console_width = 80
+        prompt_message = "[bold cyan]                                                                          Enter your choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta] [bold cyan]()[/bold cyan]: "
         prompt_length = len(prompt_message)
         padding = (console_width - prompt_length) // 2
 
-        # Print the prompt with calculated padding, and the input field right after it
         console.print(" " * padding + prompt_message, end="")
-
-        # Prompt for user choice with no extra space between prompt and input
-        choice = Prompt.ask("", choices=["1", "2", "3", "4", "5", "6", "7", "8"], default="")
-
+        
+        # Modified input handling
+        choice = console.input()
+        
+        # Check if input is valid
+        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
+            continue  # Skip back to start of loop if invalid input
+            
         if choice == "8":
             os.system('cls' if os.name == 'nt' else 'clear')
             break

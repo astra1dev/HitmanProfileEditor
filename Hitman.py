@@ -439,7 +439,7 @@ def main():
         table.add_row("2", "Edit XP")
         table.add_row("3", "Edit Money")
         table.add_row("4", "Edit Prestige Rank")
-        table.add_row("5", "Edit Level, XP, Money, Prestige Rank")
+        table.add_row("5", "Edit Level, Money, Prestige Rank")
         table.add_row("6", "Display Current Values")
         table.add_row("7", "Format JSON File")
         table.add_row("8", "Exit")

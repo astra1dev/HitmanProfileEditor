@@ -447,7 +447,7 @@ def main():
             console_width = os.get_terminal_size().columns
         except OSError:
             console_width = 80
-        prompt_message = "[bold cyan]                                                                          Enter your choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta] [bold cyan]()[/bold cyan]: "
+        prompt_message = "[bold cyan]                                        Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta] [bold cyan]()[/bold cyan]: "
         prompt_length = len(prompt_message)
         padding = (console_width - prompt_length) // 2
 

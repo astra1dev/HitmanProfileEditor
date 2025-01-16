@@ -343,6 +343,12 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     table.add_column("Current Value", style="yellow", justify="center")
     table.add_column("New Value", style="green", justify="center")
 
+    # Calculate XP if level is provided
+    if 'level' in completed_inputs:
+        level = int(completed_inputs['level'].replace(',', ''))
+        xp = calculate_hitman_xp(level)
+        completed_inputs['xp'] = f"{xp:,}"
+    
     # Add rows for all values
     table.add_row(
         "Level",
@@ -368,11 +374,9 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     console.print(table, justify="center")
     console.print("\n", end="")
 
-    # Rest of the function remains the same...
+    # Rest of the prompts
     if 'level' not in completed_inputs:
         prompt_text = "[bold cyan]              Enter New Level[/bold cyan]"
-    elif 'xp' not in completed_inputs:
-        prompt_text = "[bold cyan]                Enter New XP Amount[/bold cyan]"
     elif 'money' not in completed_inputs:
         prompt_text = "[bold cyan]                Enter New Money Amount[/bold cyan]"
     elif 'prestige' not in completed_inputs:
@@ -530,24 +534,8 @@ def main():
                     console.print("[bold red]Invalid input for level. Please enter a number.[/bold red]")
                     continue
 
-            # Get xp input
-            while True and new_level_input is not None:
-                new_xp_input = display_multi_input_prompt(file_path, completed_inputs)
-                if new_xp_input is None:
-                    break
-                try:
-                    new_xp = int(new_xp_input)
-                    if new_xp <= 0:
-                        console.print("[bold red]Please enter a valid xp greater than 0.[/bold red]")
-                        continue
-                    completed_inputs['xp'] = f"{new_xp:,}"
-                    break
-                except ValueError:
-                    console.print("[bold red]Invalid input for xp. Please enter a number.[/bold red]")
-                    continue
-
             # Get money input
-            while True and new_xp_input is not None:
+            while True and new_level_input is not None:
                 my_money_input = display_multi_input_prompt(file_path, completed_inputs)
                 if my_money_input is None:
                     break
@@ -574,11 +562,10 @@ def main():
                     console.print("[bold red]Invalid input for prestige rank. Please enter a valid number.[/bold red]")
                     continue
 
-            if all(key in completed_inputs for key in ['level', 'xp', 'money', 'prestige']):
+            if all(key in completed_inputs for key in ['level', 'money', 'prestige']):
                 success, message = update_profile(
                     file_path,
                     new_level=int(new_level_input),
-                    new_xp=int(new_xp_input),
                     my_money=int(my_money_input),
                     prestige_rank=int(prestige_rank_input)
                 )

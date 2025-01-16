@@ -125,7 +125,7 @@ def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, pr
 
 def get_current_values(file_path):
     """
-    Retrieves the current values of level, xp, money, and prestige rank from a JSON file.
+    Retrieves the current values from a JSON file.
 
     Args:
         file_path (str): The path to the JSON file.
@@ -255,20 +255,11 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
 def display_input_prompt(title, prompt_text, file_path, value_type):
     """
     Displays an input prompt for the user to enter a new value.
-
-    Args:
-        title (str): The title of the prompt.
-        prompt_text (str): The text to display in the prompt.
-        file_path (str): The path to the JSON file.
-        value_type (str): The type of value being prompted for (level, money, prestige).
-
-    Returns:
-        str: The user input.
     """
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    # Get current values
-    current_level, current_money, current_prestige = get_current_values(file_path)
+    # Get current values (now properly unpacking 4 values)
+    current_level, current_xp, current_money, current_prestige = get_current_values(file_path)
 
     # Determine which current value to show based on value_type
     current_value = ""
@@ -293,7 +284,6 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
     table.add_row(prompt_text, str(current_value))
     console.print(table, justify="center")
 
-    # Add spacing
     console.print("\n", end="")
 
     # Center the input prompt
@@ -312,21 +302,14 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
 def display_multi_input_prompt(file_path, completed_inputs=None):
     """
     Displays a multi-input prompt for the user to enter multiple values.
-
-    Args:
-        file_path (str): The path to the JSON file.
-        completed_inputs (dict, optional): A dictionary of already completed inputs.
-
-    Returns:
-        str: The user input or None if all inputs are completed.
     """
     if completed_inputs is None:
         completed_inputs = {}
 
     os.system('cls' if os.name == 'nt' else 'clear')
 
-    # Get current values
-    current_level, current_money, current_prestige = get_current_values(file_path)
+    # Get current values (now properly unpacking 4 values)
+    current_level, current_xp, current_money, current_prestige = get_current_values(file_path)
 
     header = Panel(
         "[bold cyan]Hitman Profile Editor[/bold cyan]",
@@ -361,7 +344,7 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     console.print(table, justify="center")
     console.print("\n", end="")
 
-    # Determine which input to show
+    # Rest of the function remains the same...
     if 'level' not in completed_inputs:
         prompt_text = "[bold cyan]              Enter New Level[/bold cyan]"
     elif 'money' not in completed_inputs:
@@ -369,11 +352,9 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     elif 'prestige' not in completed_inputs:
         prompt_text = "[bold cyan]                Enter New Prestige Rank[/bold cyan]"
     else:
-        # If all inputs are completed, show the values for a moment before proceeding
         time.sleep(2)
         return None
 
-    # Center the input prompt
     try:
         console_width = os.get_terminal_size().columns
     except OSError:
@@ -383,7 +364,6 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
 
     console.print(" " * padding + prompt_text, end="")
     return Prompt.ask("", default="0")
-
 
 def main():
     file_path = None

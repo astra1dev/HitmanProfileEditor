@@ -437,7 +437,7 @@ def main():
         table.add_row("2", "Edit XP")
         table.add_row("3", "Edit Money")
         table.add_row("4", "Edit Prestige Rank")
-        table.add_row("5", "Edit Level, Money, Prestige Rank")
+        table.add_row("5", "Edit Level, XP, Money, Prestige Rank")
         table.add_row("6", "Display Current Values")
         table.add_row("7", "Format JSON File")
         table.add_row("8", "Exit")
@@ -532,8 +532,24 @@ def main():
                     console.print("[bold red]Invalid input for level. Please enter a number.[/bold red]")
                     continue
 
-            # Get money input
+            # Get xp input
             while True and new_level_input is not None:
+                new_xp_input = display_multi_input_prompt(file_path, completed_inputs)
+                if new_xp_input is None:
+                    break
+                try:
+                    new_xp = int(new_xp_input)
+                    if new_xp <= 0:
+                        console.print("[bold red]Please enter a valid xp greater than 0.[/bold red]")
+                        continue
+                    completed_inputs['xp'] = f"{new_xp:,}"
+                    break
+                except ValueError:
+                    console.print("[bold red]Invalid input for xp. Please enter a number.[/bold red]")
+                    continue
+
+            # Get money input
+            while True and new_xp_input is not None:
                 my_money_input = display_multi_input_prompt(file_path, completed_inputs)
                 if my_money_input is None:
                     break
@@ -560,10 +576,11 @@ def main():
                     console.print("[bold red]Invalid input for prestige rank. Please enter a valid number.[/bold red]")
                     continue
 
-            if all(key in completed_inputs for key in ['level', 'money', 'prestige']):
+            if all(key in completed_inputs for key in ['level', 'xp', 'money', 'prestige']):
                 success, message = update_profile(
                     file_path,
                     new_level=int(new_level_input),
+                    new_xp=int(new_xp_input),
                     my_money=int(my_money_input),
                     prestige_rank=int(prestige_rank_input)
                 )

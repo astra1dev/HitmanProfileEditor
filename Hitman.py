@@ -85,6 +85,13 @@ def format_json_file(file_path):
 
 XP_PER_LEVEL = 6000  # Define the XP required for each level
 
+def calculate_hitman_level(xp: int) -> int:
+    """
+    Calculates the level for the given XP based on XP_PER_LEVEL.
+    Minimum level returned is 1.
+    """
+    return max(1, (xp // XP_PER_LEVEL) + 1)
+
 def calculate_hitman_xp(target_level: int) -> int:
     """
     Calculates the required XP for the given level based on XP_PER_LEVEL.
@@ -180,13 +187,14 @@ def get_current_values(file_path):
         return None, None, None, None
 
 
-def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None):
+def update_profile(file_path, new_level=None, new_xp=None, my_money=None, prestige_rank=None):
     """
-    Updates the profile JSON file with new values for level, money, and prestige rank.
+    Updates the profile JSON file with new values for level, xp, money, and prestige rank.
 
     Args:
         file_path (str): The path to the JSON file.
         new_level (int, optional): The new level to set.
+        new_xp (int, optional): The new xp to set.
         my_money (int, optional): The new money amount to set.
         prestige_rank (int, optional): The new prestige rank to set.
 
@@ -200,17 +208,27 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
                 raw_data = raw_data[1:]
             data = json.loads(raw_data)
 
-        new_xp = calculate_hitman_xp(new_level) if new_level is not None else None
+        # Calculate new_level and new_xp if either is provided
+        if new_xp is not None:
+            new_level = calculate_hitman_level(new_xp)
+        elif new_level is not None:
+            new_xp = calculate_hitman_xp(new_level)
+
+        # Backup the original file
         backup_path = file_path + '.backup'
         os.replace(file_path, backup_path)
 
+        # Update the data with new values
         find_and_replace_in_json(data, new_level, new_xp, my_money, prestige_rank)
 
+        # Write the updated data back to the file
         with open(file_path, 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=2)
 
-        os.system('cls' if os.name == 'nt' else 'clear')  # Added compatibility for non-Windows systems
+        # Clear the console for a clean display
+        os.system('cls' if os.name == 'nt' else 'clear')
 
+        # Display the updated values
         header = Panel(
             "[bold cyan]Hitman Profile Editor[/bold cyan]",
             expand=False,
@@ -218,7 +236,6 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
         )
         console.print(header, justify="center")
 
-        # Create table for updated values
         table = Table(title="[bold yellow]Updated Values[/bold yellow]", show_header=True, header_style="bold magenta")
         table.add_column("Attribute", style="cyan", justify="center")
         table.add_column("Value", style="yellow", justify="center")
@@ -228,7 +245,7 @@ def update_profile(file_path, new_level=None, my_money=None, prestige_rank=None)
             table.add_row("Level", f"{new_level:,}")
             table.add_row("XP", f"{new_xp:,}")
         if my_money is not None:
-            table.add_row("Merces", f"{my_money:,}")
+            table.add_row("Money", f"{my_money:,}")
         if prestige_rank is not None:
             table.add_row("Prestige Rank", f"{prestige_rank:,}")
 
@@ -265,6 +282,8 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
     current_value = ""
     if value_type == "level":
         current_value = current_level
+    elif value_type == "xp":
+        current_value = current_xp
     elif value_type == "money":
         current_value = current_money
     elif value_type == "prestige":
@@ -331,6 +350,11 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
         str(completed_inputs.get('level', ''))
     )
     table.add_row(
+        "XP",
+        str(current_xp),
+        str(completed_inputs.get('xp', ''))
+    )
+    table.add_row(
         "Money",
         str(current_money),
         str(completed_inputs.get('money', ''))
@@ -347,6 +371,8 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     # Rest of the function remains the same...
     if 'level' not in completed_inputs:
         prompt_text = "[bold cyan]              Enter New Level[/bold cyan]"
+    elif 'xp' not in completed_inputs:
+        prompt_text = "[bold cyan]                Enter New XP Amount[/bold cyan]"
     elif 'money' not in completed_inputs:
         prompt_text = "[bold cyan]                Enter New Money Amount[/bold cyan]"
     elif 'prestige' not in completed_inputs:
@@ -408,12 +434,13 @@ def main():
         table.add_column("Action", style="yellow")
 
         table.add_row("1", "Edit Level")
-        table.add_row("2", "Edit Money")
-        table.add_row("3", "Edit Prestige Rank")
-        table.add_row("4", "Edit Level, Money, Prestige Rank")
-        table.add_row("5", "Display Current Values")
-        table.add_row("6", "Format JSON File")
-        table.add_row("7", "Exit")
+        table.add_row("2", "Edit XP")
+        table.add_row("3", "Edit Money")
+        table.add_row("4", "Edit Prestige Rank")
+        table.add_row("5", "Edit Level, Money, Prestige Rank")
+        table.add_row("6", "Display Current Values")
+        table.add_row("7", "Format JSON File")
+        table.add_row("8", "Exit")
 
         console.print(table, justify="center")
 
@@ -433,9 +460,9 @@ def main():
         console.print(" " * padding + prompt_message, end="")
 
         # Prompt for user choice with no extra space between prompt and input
-        choice = Prompt.ask("", choices=["1", "2", "3", "4", "5", "6", "7"], default="")
+        choice = Prompt.ask("", choices=["1", "2", "3", "4", "5", "6", "7", "8"], default="")
 
-        if choice == "7":
+        if choice == "8":
             os.system('cls' if os.name == 'nt' else 'clear')
             break
 
@@ -453,6 +480,19 @@ def main():
                 console.print("[bold red]Invalid input for level. Please enter a number.[/bold red]")
 
         elif choice == "2":
+            new_xp_input = display_input_prompt("XP Editor", "Enter New XP", file_path, "xp")
+            try:
+                new_xp = int(new_xp_input)
+                if new_xp > 0:
+                    success, message = update_profile(file_path, new_xp=new_xp)
+                    if not success:
+                        console.print(message)
+                else:
+                    console.print("[bold red]Please enter a valid xp greater than 0.[/bold red]")
+            except ValueError:
+                console.print("[bold red]Invalid input for xp. Please enter a number.[/bold red]")
+
+        elif choice == "3":
             my_money_input = display_input_prompt("Money Editor", "Enter Money Amount", file_path, "money")
             try:
                 my_money = int(my_money_input)
@@ -462,7 +502,7 @@ def main():
             except ValueError:
                 console.print("[bold red]Invalid input for money amount. Please enter a valid number.[/bold red]")
 
-        elif choice == "3":
+        elif choice == "4":
             prestige_rank_input = display_input_prompt("Prestige Rank Editor", "Enter Prestige Rank", file_path,
                                                        "prestige")
             try:
@@ -473,7 +513,7 @@ def main():
             except ValueError:
                 console.print("[bold red]Invalid input for prestige rank. Please enter a valid number.[/bold red]")
 
-        elif choice == "4":
+        elif choice == "5":
             completed_inputs = {}
 
             # Get level input
@@ -530,11 +570,11 @@ def main():
                 if not success:
                     console.print(message)
 
-        elif choice == "6":
+        elif choice == "7":
             os.system('cls' if os.name == 'nt' else 'clear')
             format_json_file(file_path)
 
-        elif choice == "5":
+        elif choice == "6":
             os.system('cls' if os.name == 'nt' else 'clear')
             level, xp, money, prestige_rank = get_current_values(file_path)
             if level is not None:

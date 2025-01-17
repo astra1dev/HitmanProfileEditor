@@ -342,7 +342,7 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     # Calculate XP if level is provided
     if 'level' in completed_inputs:
         level = int(completed_inputs['level'].replace(',', ''))
-        xp = calculate_hitman_xp(level)
+        xp = calculate_xp(level)
         completed_inputs['xp'] = f"{xp:,}"
     
     # Add rows for all values

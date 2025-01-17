@@ -7,5 +7,9 @@
 [TOOL]
 
 - Level
-- Money
-- Prestige
+- Money (Freelancer)
+- Prestige (Freelancer)
+
+[CAUTION]
+
+Your Peacock Folder Must Be Named As **Peacock**

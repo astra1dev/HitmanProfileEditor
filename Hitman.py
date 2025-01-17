@@ -6,12 +6,13 @@ from rich.console import Console
 from rich.table import Table
 from rich.prompt import Prompt
 from rich.panel import Panel
-from shutil import get_terminal_size
 import json
 import os
 import time
 import ctypes
 from pathlib import Path
+
+XP_PER_LEVEL = 6000  # Define the XP required for each level
 
 # Set the TERM environment variable if not already set
 if 'TERM' not in os.environ:
@@ -26,7 +27,7 @@ except Exception:
     pass
 
 
-def find_profile_directory():
+def find_profile_directory() -> str or None:
     """
     Automatically searches for the directory 'Peacock\\userdata\\users'
     across common locations like all drives, Desktop, and Downloads.
@@ -56,50 +57,58 @@ def find_profile_directory():
     return None
 
 
-def format_json_file(file_path):
+def read_json_file(file_path) -> dict or None:
     """
-    Formats a JSON file to have a consistent indentation.
+    Reads a JSON file and returns its content as a dictionary.
 
     Args:
-        file_path (str): The path to the JSON file to format.
+        file_path (str): The path to the JSON file.
 
     Returns:
-        bool: True if the file was formatted successfully, False otherwise.
+        dict: The content of the JSON file.
     """
     try:
         with open(file_path, 'r', encoding='utf-8') as file:
             raw_data = file.read()
             if raw_data.startswith('\ufeff'):
                 raw_data = raw_data[1:]
-            data = json.loads(raw_data)
+            return json.loads(raw_data)
+    except Exception as e:
+        console.print(f"[red]Error reading JSON file: {str(e)}[/red]")
+        return None
 
+
+def write_json_file(file_path: str, data: dict) -> None:
+    """
+    Writes a dictionary to a JSON file with formatted indentation.
+
+    Args:
+        file_path (str): The path to the JSON file to format.
+        data (dict): The JSON data to write to the file.
+    """
+    try:
         with open(file_path, 'w', encoding='utf-8') as file:
             json.dump(data, file, indent=2)
-
         console.print("[green]JSON file formatted successfully![/green]")
-        return True
     except Exception as e:
-        console.print(f"[red]Error: {str(e)}[/red]")
-        return False
+        console.print(f"[red]Error writing JSON file: {str(e)}[/red]")
 
 
-XP_PER_LEVEL = 6000  # Define the XP required for each level
-
-def calculate_hitman_level(xp: int) -> int:
+def calculate_level(xp: int) -> int:
     """
     Calculates the level for the given XP based on XP_PER_LEVEL.
     Minimum level returned is 1.
     """
     return max(1, (xp // XP_PER_LEVEL) + 1)
 
-def calculate_hitman_xp(target_level: int) -> int:
+def calculate_xp(target_level: int) -> int:
     """
     Calculates the required XP for the given level based on XP_PER_LEVEL.
     Minimum XP returned is 0.
     """
     return max(0, (target_level - 1) * XP_PER_LEVEL)
 
-def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, prestige_rank=None):
+def find_and_replace_in_json(obj: dict, new_level: int = None, new_xp: int = None, my_money: int = None, prestige_rank: int = None) -> None:
     """
     Recursively finds and replaces values in a JSON object.
 
@@ -130,7 +139,7 @@ def find_and_replace_in_json(obj, new_level=None, new_xp=None, my_money=None, pr
             find_and_replace_in_json(item, new_level, new_xp, my_money, prestige_rank)
 
 
-def get_current_values(file_path):
+def get_current_values(file_path: str) -> tuple:
     """
     Retrieves the current values from a JSON file.
 
@@ -141,11 +150,7 @@ def get_current_values(file_path):
         tuple: A tuple containing the current level, xp, money, and prestige rank.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            raw_data = file.read()
-            if raw_data.startswith('\ufeff'):
-                raw_data = raw_data[1:]
-            data = json.loads(raw_data)
+        data = read_json_file(file_path)
 
         def find_values(obj):
             level, xp, money, prestige_rank = None, None, None, None
@@ -187,7 +192,15 @@ def get_current_values(file_path):
         return None, None, None, None
 
 
-def update_profile(file_path, new_level=None, new_xp=None, my_money=None, prestige_rank=None):
+def create_header_panel() -> Panel:
+    return Panel(
+        "[bold cyan]Hitman Profile Editor[/bold cyan]",
+        expand=False,
+        border_style="bold green"
+    )
+
+
+def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_money: int = None, prestige_rank:int = None) -> tuple:
     """
     Updates the profile JSON file with new values for level, xp, money, and prestige rank.
 
@@ -202,38 +215,29 @@ def update_profile(file_path, new_level=None, new_xp=None, my_money=None, presti
         tuple: A tuple containing a boolean indicating success and a message.
     """
     try:
-        with open(file_path, 'r', encoding='utf-8') as file:
-            raw_data = file.read()
-            if raw_data.startswith('\ufeff'):
-                raw_data = raw_data[1:]
-            data = json.loads(raw_data)
+        data = read_json_file(file_path)
 
         # Calculate new_level and new_xp if either is provided
         if new_xp is not None:
-            new_level = calculate_hitman_level(new_xp)
+            new_level = calculate_level(new_xp)
         elif new_level is not None:
-            new_xp = calculate_hitman_xp(new_level)
+            new_xp = calculate_xp(new_level)
 
         # Backup the original file
-        backup_path = file_path + '.backup'
+        backup_path = file_path + '.bak'
         os.replace(file_path, backup_path)
 
         # Update the data with new values
         find_and_replace_in_json(data, new_level, new_xp, my_money, prestige_rank)
 
         # Write the updated data back to the file
-        with open(file_path, 'w', encoding='utf-8') as file:
-            json.dump(data, file, indent=2)
+        write_json_file(file_path, data)
 
         # Clear the console for a clean display
-        os.system('cls' if os.name == 'nt' else 'clear')
+        console.clear()
 
         # Display the updated values
-        header = Panel(
-            "[bold cyan]Hitman Profile Editor[/bold cyan]",
-            expand=False,
-            border_style="bold green"
-        )
+        header = create_header_panel()
         console.print(header, justify="center")
 
         table = Table(title="[bold yellow]Updated Values[/bold yellow]", show_header=True, header_style="bold magenta")
@@ -273,7 +277,7 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
     """
     Displays an input prompt for the user to enter a new value.
     """
-    os.system('cls' if os.name == 'nt' else 'clear')
+    console.clear()
 
     # Get current values (now properly unpacking 4 values)
     current_level, current_xp, current_money, current_prestige = get_current_values(file_path)
@@ -289,11 +293,7 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
     elif value_type == "prestige":
         current_value = current_prestige
 
-    header = Panel(
-        "[bold cyan]Hitman Profile Editor[/bold cyan]",
-        expand=False,
-        border_style="bold green"
-    )
+    header = create_header_panel()
     console.print(header, justify="center")
 
     # Create input table
@@ -325,16 +325,12 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     if completed_inputs is None:
         completed_inputs = {}
 
-    os.system('cls' if os.name == 'nt' else 'clear')
+    console.clear()
 
     # Get current values (now properly unpacking 4 values)
     current_level, current_xp, current_money, current_prestige = get_current_values(file_path)
 
-    header = Panel(
-        "[bold cyan]Hitman Profile Editor[/bold cyan]",
-        expand=False,
-        border_style="bold green"
-    )
+    header = create_header_panel()
     console.print(header, justify="center")
 
     # Create table showing all current and input values
@@ -417,14 +413,9 @@ def main():
         return
 
     while True:
-        os.system('cls' if os.name == 'nt' else 'clear')
         console.clear()
 
-        header = Panel(
-            "[bold cyan]Hitman Profile Editor[/bold cyan]",
-            expand=False,
-            border_style="bold green"
-        )
+        header = create_header_panel()
         console.print(header, justify="center")
 
         table = Table(title="[bold yellow]Options[/bold yellow]", show_header=True, header_style="bold magenta")
@@ -461,7 +452,7 @@ def main():
             continue  # Skip back to start of loop if invalid input
             
         if choice == "8":
-            os.system('cls' if os.name == 'nt' else 'clear')
+            console.clear()
             break
 
         elif choice == "1":
@@ -586,18 +577,15 @@ def main():
                     console.print(message)
 
         elif choice == "7":
-            os.system('cls' if os.name == 'nt' else 'clear')
-            format_json_file(file_path)
+            console.clear()
+            data = read_json_file(file_path)
+            write_json_file(file_path, data)
 
         elif choice == "6":
-            os.system('cls' if os.name == 'nt' else 'clear')
+            console.clear()
             level, xp, money, prestige_rank = get_current_values(file_path)
             if level is not None:
-                header = Panel(
-                    "[bold cyan]Hitman Profile Editor[/bold cyan]",
-                    expand=False,
-                    border_style="bold green"
-                )
+                header = create_header_panel()
                 console.print(header, justify="center")
                 table = Table(title="[bold yellow]Current Values[/bold yellow]", show_header=True,
                               header_style="bold magenta")

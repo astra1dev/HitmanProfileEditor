@@ -7,7 +7,7 @@ This tool can edit the following values in the `userdata.json` file which contai
 
 Additionally, the JSON file can be formatted to make it easier to read if you open it manually.
 
-> ![INFO]
+> [!INFO]
 > You need to have [Peacock](https://thepeacockproject.org/) installed and working before using this tool.
 
 # Preview

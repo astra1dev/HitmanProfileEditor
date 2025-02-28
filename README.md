@@ -1,15 +1,19 @@
-[READ.ME]
+# 🎉 Features
 
-- [Peacock] - https://thepeacockproject.org/wiki/intel/installation/
-- [Cry4pt] - https://discord.com/users/1276699402974658571
-- [astra1dev] - https://discord.com/users/951884381209890877
+This tool can edit the following values in the `userdata.json` file which contains your progress in the game:
+- Profile Level and XP
+- Freelancer Money (Merces)
+- Freelancer Prestige
 
-[TOOL]
+Additionally, the JSON file can be formatted to make it easier to read if you open it manually.
 
-- Level
-- Money (Freelancer)
-- Prestige (Freelancer)
+> ![INFO]
+> You need to have [Peacock](https://thepeacockproject.org/) installed and working before using this tool.
 
-[CAUTION]
+# Preview
 
-Your Peacock Folder Must Be Named As **Peacock**
+![Preview](/preview.png)
+cc
+<hr>
+
+created by [Cry4pt](https://discord.com/users/1276699402974658571) and astra1dev

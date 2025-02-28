@@ -1,5 +1,4 @@
 # Credits to Cry4pt (On Discord)
-# Open Sourced Malware
 # Hitman 1/2/3 Profile Editor - (Peacock Needed)
 
 from rich.console import Console
@@ -442,14 +441,14 @@ def main():
             console_width = os.get_terminal_size().columns
         except OSError:
             console_width = 80
-        prompt_message = "[bold cyan]                                        Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta] [bold cyan]()[/bold cyan]: "
-        prompt_length = len(prompt_message)
-        padding = (console_width - prompt_length) // 2
+        prompt_message = "[bold cyan]Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta] [bold cyan]()[/bold cyan]"
+        prompt_length = console.measure(prompt_message).maximum
+        padding = (console_width - prompt_length) // 2 - 1
 
         console.print(" " * padding + prompt_message, end="")
         
         # Modified input handling
-        choice = console.input()
+        choice = Prompt.ask("", console=console)
         
         # Check if input is valid
         if choice not in ["1", "2", "3", "4", "5", "6", "7", "8"]:

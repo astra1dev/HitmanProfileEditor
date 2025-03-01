@@ -13,17 +13,42 @@ from pathlib import Path
 
 XP_PER_LEVEL = 6000  # Define the XP required for each level
 
-# Set the TERM environment variable if not already set
+# Set the TERM environment variable if not already set to avoid issues with colored output
 if 'TERM' not in os.environ:
     os.environ['TERM'] = 'xterm-256color'
 
 console = Console()
 
-try:
-    if os.name == 'nt':
-        ctypes.windll.kernel32.SetConsoleTitleW("Created By Cry4pt")
-except Exception:
-    pass
+# Set the title of the terminal window
+if os.name == 'nt':
+    ctypes.windll.kernel32.SetConsoleTitleW("Created By Cry4pt")
+elif os.name == "posix":
+    print(f"\033]0;{"Created by Cry4pt"}\007", end="", flush=True)
+
+
+def get_console_width() -> int:
+    """
+    Gets the width of the console window.
+
+    Returns:
+        int: The width of the console window.
+    """
+    try:
+        return os.get_terminal_size().columns
+    except OSError:
+        return 80
+
+
+def print_centered_prompt(prompt: str) -> None:
+    """
+    Prints a prompt centered in the console window.
+
+    Args:
+        prompt (str): The prompt to print.
+    """
+    prompt_length = console.measure(prompt).maximum
+    padding = (get_console_width() - prompt_length) // 2 - 1
+    console.print(" " * padding + prompt, end="")
 
 
 def find_profile_directory() -> str or None:
@@ -107,7 +132,8 @@ def calculate_xp(target_level: int) -> int:
     """
     return max(0, (target_level - 1) * XP_PER_LEVEL)
 
-def find_and_replace_in_json(obj: dict, new_level: int = None, new_xp: int = None, my_money: int = None, prestige_rank: int = None) -> None:
+def find_and_replace_in_json(obj: dict, new_level: int = None, new_xp: int = None, my_money: int = None,
+                             prestige_rank: int = None) -> None:
     """
     Recursively finds and replaces values in a JSON object.
 
@@ -191,15 +217,20 @@ def get_current_values(file_path: str) -> tuple:
         return None, None, None, None
 
 
-def create_header_panel() -> Panel:
-    return Panel(
+def print_header_panel() -> None:
+    """
+    Prints the "Hitman Profile Editor" header panel.
+    """
+    header = Panel(
         "[bold cyan]Hitman Profile Editor[/bold cyan]",
         expand=False,
         border_style="bold green"
     )
+    console.print(header, justify="center")
 
 
-def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_money: int = None, prestige_rank:int = None) -> tuple:
+def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_money: int = None,
+                   prestige_rank:int = None) -> tuple:
     """
     Updates the profile JSON file with new values for level, xp, money, and prestige rank.
 
@@ -236,8 +267,7 @@ def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_
         console.clear()
 
         # Display the updated values
-        header = create_header_panel()
-        console.print(header, justify="center")
+        print_header_panel()
 
         table = Table(title="[bold yellow]Updated Values[/bold yellow]", show_header=True, header_style="bold magenta")
         table.add_column("Attribute", style="cyan", justify="center")
@@ -255,16 +285,7 @@ def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_
         console.print(table, justify="center")
         console.print("")  # Add spacing
 
-        # Center the "Press Enter" prompt
-        prompt_message = "[bold cyan]                       Press Enter To Go Back [/bold cyan]"
-        try:
-            console_width = os.get_terminal_size().columns
-        except OSError:
-            console_width = 80
-        prompt_length = len(prompt_message)
-        padding = (console_width - prompt_length) // 2
-
-        console.print(" " * padding + prompt_message, end="")
+        print_centered_prompt("[bold cyan]Press Enter to go back [/bold cyan]")
         console.input()
 
         return True, ""
@@ -292,8 +313,7 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
     elif value_type == "prestige":
         current_value = current_prestige
 
-    header = create_header_panel()
-    console.print(header, justify="center")
+    print_header_panel()
 
     # Create input table
     table = Table(title=f"[bold yellow]{title}[/bold yellow]", show_header=True, header_style="bold magenta")
@@ -304,17 +324,8 @@ def display_input_prompt(title, prompt_text, file_path, value_type):
 
     console.print("\n", end="")
 
-    # Center the input prompt
-    prompt_message = "[bold cyan]                 Enter Value[/bold cyan]"
-    try:
-        console_width = os.get_terminal_size().columns
-    except OSError:
-        console_width = 80
-    prompt_length = len(prompt_message)
-    padding = (console_width - prompt_length) // 2
-
-    console.print(" " * padding + prompt_message, end="")
-    return Prompt.ask("", default="0")
+    print_centered_prompt("[bold cyan]Enter Value[/bold cyan]")
+    return Prompt.ask(console=console)
 
 
 def display_multi_input_prompt(file_path, completed_inputs=None):
@@ -329,8 +340,7 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     # Get current values (now properly unpacking 4 values)
     current_level, current_xp, current_money, current_prestige = get_current_values(file_path)
 
-    header = create_header_panel()
-    console.print(header, justify="center")
+    print_header_panel()
 
     # Create table showing all current and input values
     table = Table(title="[bold yellow]Current Values[/bold yellow]", show_header=True, header_style="bold magenta")
@@ -343,7 +353,7 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
         level = int(completed_inputs['level'].replace(',', ''))
         xp = calculate_xp(level)
         completed_inputs['xp'] = f"{xp:,}"
-    
+
     # Add rows for all values
     table.add_row(
         "Level",
@@ -371,7 +381,7 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
 
     # Rest of the prompts
     if 'level' not in completed_inputs:
-        prompt_text = "[bold cyan]              Enter New Level[/bold cyan]"
+        prompt_text = "[bold cyan]Enter New Level[/bold cyan]"
     elif 'money' not in completed_inputs:
         prompt_text = "[bold cyan]                Enter New Money Amount[/bold cyan]"
     elif 'prestige' not in completed_inputs:
@@ -380,15 +390,8 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
         time.sleep(2)
         return None
 
-    try:
-        console_width = os.get_terminal_size().columns
-    except OSError:
-        console_width = 80
-    prompt_length = len(prompt_text)
-    padding = (console_width - prompt_length) // 2
-
-    console.print(" " * padding + prompt_text, end="")
-    return Prompt.ask("", default="0")
+    print_centered_prompt(prompt_text)
+    return Prompt.ask(console=console)
 
 def main():
     file_path = None
@@ -406,7 +409,7 @@ def main():
             "[red]Unable to find the directory 'Peacock\\userdata\\users'. Please specify the file path manually.[/red]")
         file_path = Prompt.ask(
             "[bold cyan]Enter the path to your profile JSON file:[/bold cyan]",
-            default="userdata.json"
+            default="userdata.json", console=console
         )
 
     if file_path and os.path.exists(file_path):
@@ -418,8 +421,7 @@ def main():
     while True:
         console.clear()
 
-        header = create_header_panel()
-        console.print(header, justify="center")
+        print_header_panel()
 
         table = Table(title="[bold yellow]Options[/bold yellow]", show_header=True, header_style="bold magenta")
         table.add_column("Choice", style="cyan", justify="center")
@@ -437,23 +439,15 @@ def main():
         console.print(table, justify="center")
         console.print("\n", end="")
 
-        try:
-            console_width = os.get_terminal_size().columns
-        except OSError:
-            console_width = 80
-        prompt_message = "[bold cyan]Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta] [bold cyan]()[/bold cyan]"
-        prompt_length = console.measure(prompt_message).maximum
-        padding = (console_width - prompt_length) // 2 - 1
+        print_centered_prompt("[bold cyan]Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta]")
 
-        console.print(" " * padding + prompt_message, end="")
-        
         # Modified input handling
         choice = Prompt.ask("", console=console)
-        
+
         # Check if input is valid
         if choice not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
             continue  # Skip back to start of loop if invalid input
-            
+
         if choice == "8":
             console.clear()
             break
@@ -571,8 +565,7 @@ def main():
             console.clear()
             level, xp, money, prestige_rank = get_current_values(file_path)
             if level is not None:
-                header = create_header_panel()
-                console.print(header, justify="center")
+                print_header_panel()
                 table = Table(title="[bold yellow]Current Values[/bold yellow]", show_header=True,
                               header_style="bold magenta")
                 table.add_column("Attribute", style="cyan", justify="center")
@@ -589,16 +582,7 @@ def main():
             console.print("\n", end="")
 
             # Calculate the padding to center the input prompt
-            prompt_message = "[bold cyan]                       Press Enter To Go Back [/bold cyan]"
-            try:
-                console_width = os.get_terminal_size().columns
-            except OSError:
-                console_width = 80
-            prompt_length = len(prompt_message)
-            padding = (console_width - prompt_length) // 2
-
-            # Print the prompt with calculated padding, and the input field right after it
-            console.print(" " * padding + prompt_message, end="")
+            print_centered_prompt("[bold cyan]Press Enter to go back [/bold cyan]")
             console.input()
 
 

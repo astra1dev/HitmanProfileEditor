@@ -4,6 +4,8 @@ This tool can edit the following values in the `userdata.json` file which contai
 - Profile Level and XP
 - Freelancer Money (Merces)
 - Freelancer Prestige
+- Unlock All Freelancer Tools (the ones in boxes in safehouse, e.g. lockpick or explosive duck)
+- Unlock All Freelancer Weapons
 
 Additionally, the JSON file can be formatted to make it easier to read if you open it manually.
 

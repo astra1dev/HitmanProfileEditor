@@ -1,5 +1,8 @@
-# Credits to Cry4pt (On Discord)
-# Hitman 1/2/3 Profile Editor - (Peacock Needed)
+"""
+Hitman 1/2/3 Profile Editor
+Peacock Required
+Credits to Cry4pt (On Discord)
+"""
 
 from rich.console import Console
 from rich.table import Table
@@ -10,8 +13,7 @@ import os
 import time
 import ctypes
 from pathlib import Path
-
-XP_PER_LEVEL = 6000  # Define the XP required for each level
+from Utils import *
 
 # Set the TERM environment variable if not already set to avoid issues with colored output
 if 'TERM' not in os.environ:
@@ -133,7 +135,7 @@ def calculate_xp(target_level: int) -> int:
     return max(0, (target_level - 1) * XP_PER_LEVEL)
 
 def find_and_replace_in_json(obj: dict, new_level: int = None, new_xp: int = None, my_money: int = None,
-                             prestige_rank: int = None) -> None:
+                             prestige_rank: int = None, tools: list = None, weapons: list = None) -> None:
     """
     Recursively finds and replaces values in a JSON object.
 
@@ -143,6 +145,8 @@ def find_and_replace_in_json(obj: dict, new_level: int = None, new_xp: int = Non
         new_xp (int, optional): The new XP to set.
         my_money (int, optional): The new money amount to set.
         prestige_rank (int, optional): The new prestige rank to set.
+        tools (list, optional): List of tools to unlock.
+        weapons (list, optional): List of weapons to unlock.
     """
     if isinstance(obj, dict):
         for key, value in obj.items():
@@ -157,11 +161,27 @@ def find_and_replace_in_json(obj: dict, new_level: int = None, new_xp: int = Non
                 obj[key] = my_money
             elif key == "PrestigeRank" and prestige_rank is not None:
                 obj[key] = prestige_rank
+            elif key == "TransientItems" and tools is not None:
+                if not isinstance(value, list):
+                    value = []
+
+                for tool in tools:
+                    if tool not in value:
+                        value.append(tool)
+                obj[key] = value
+            elif key == "PersistentItems" and weapons is not None:
+                if not isinstance(value, list):
+                    value = []
+
+                for weapon in weapons:
+                    if weapon not in value:
+                        value.append(weapon)
+                obj[key] = value
             elif isinstance(value, (dict, list)):
-                find_and_replace_in_json(value, new_level, new_xp, my_money, prestige_rank)
+                find_and_replace_in_json(value, new_level, new_xp, my_money, prestige_rank, tools, weapons)
     elif isinstance(obj, list):
         for item in obj:
-            find_and_replace_in_json(item, new_level, new_xp, my_money, prestige_rank)
+            find_and_replace_in_json(item, new_level, new_xp, my_money, prestige_rank, tools, weapons)
 
 
 def get_current_values(file_path: str) -> tuple:
@@ -230,7 +250,7 @@ def print_header_panel() -> None:
 
 
 def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_money: int = None,
-                   prestige_rank:int = None) -> tuple:
+                   prestige_rank:int = None, tools: list = None, weapons: list = None) -> tuple:
     """
     Updates the profile JSON file with new values for level, xp, money, and prestige rank.
 
@@ -240,6 +260,8 @@ def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_
         new_xp (int, optional): The new xp to set.
         my_money (int, optional): The new money amount to set.
         prestige_rank (int, optional): The new prestige rank to set.
+        tools (list, optional): List of tools to unlock.
+        weapons (list, optional): List of weapons to unlock.
 
     Returns:
         tuple: A tuple containing a boolean indicating success and a message.
@@ -258,7 +280,7 @@ def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_
         os.replace(file_path, backup_path)
 
         # Update the data with new values
-        find_and_replace_in_json(data, new_level, new_xp, my_money, prestige_rank)
+        find_and_replace_in_json(data, new_level, new_xp, my_money, prestige_rank, tools, weapons)
 
         # Write the updated data back to the file
         write_json_file(file_path, data)
@@ -281,6 +303,10 @@ def update_profile(file_path: str, new_level: int = None, new_xp:int = None, my_
             table.add_row("Money", f"{my_money:,}")
         if prestige_rank is not None:
             table.add_row("Prestige Rank", f"{prestige_rank:,}")
+        if tools is not None:
+            table.add_row("Unlocked Tools", "All")
+        if weapons is not None:
+            table.add_row("Unlocked Weapons", "All")
 
         console.print(table, justify="center")
         console.print("")  # Add spacing
@@ -383,9 +409,9 @@ def display_multi_input_prompt(file_path, completed_inputs=None):
     if 'level' not in completed_inputs:
         prompt_text = "[bold cyan]Enter New Level[/bold cyan]"
     elif 'money' not in completed_inputs:
-        prompt_text = "[bold cyan]                Enter New Money Amount[/bold cyan]"
+        prompt_text = "[bold cyan]Enter New Money Amount[/bold cyan]"
     elif 'prestige' not in completed_inputs:
-        prompt_text = "[bold cyan]                Enter New Prestige Rank[/bold cyan]"
+        prompt_text = "[bold cyan]Enter New Prestige Rank[/bold cyan]"
     else:
         time.sleep(2)
         return None
@@ -405,8 +431,7 @@ def main():
                 file_path = os.path.join(directory, filename)
                 break
     else:
-        console.print(
-            "[red]Unable to find the directory 'Peacock\\userdata\\users'. Please specify the file path manually.[/red]")
+        console.print("[red]Unable to find the directory 'Peacock\\userdata\\users'.[/red]")
         file_path = Prompt.ask(
             "[bold cyan]Enter the path to your profile JSON file:[/bold cyan]",
             default="userdata.json", console=console
@@ -427,32 +452,30 @@ def main():
         table.add_column("Choice", style="cyan", justify="center")
         table.add_column("Action", style="yellow")
 
-        table.add_row("1", "Edit Level")
-        table.add_row("2", "Edit XP")
-        table.add_row("3", "Edit Money")
-        table.add_row("4", "Edit Prestige Rank")
+        table.add_row("1", "Edit Profile Level")
+        table.add_row("2", "Edit Profile XP")
+        table.add_row("3", "Edit Freelancer Money")
+        table.add_row("4", "Edit Freelancer Prestige Rank")
         table.add_row("5", "Edit Level, Money, Prestige Rank")
-        table.add_row("6", "Display Current Values")
-        table.add_row("7", "Format JSON File")
-        table.add_row("8", "Exit")
+        table.add_row("6", "Unlock All Freelancer Tools")
+        table.add_row("7", "Unlock All Freelancer Weapons")
+        table.add_row("8", "Display Current Values")
+        table.add_row("9", "Format JSON File")
+        table.add_row("10", "Exit")
 
         console.print(table, justify="center")
         console.print("\n", end="")
 
-        print_centered_prompt("[bold cyan]Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8][/bold magenta]")
+        print_centered_prompt("[bold cyan]Enter Your Choice[/bold cyan] [bold magenta][1/2/3/4/5/6/7/8/9/10][/bold magenta]")
 
         # Modified input handling
         choice = Prompt.ask("", console=console)
 
         # Check if input is valid
-        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8"]:
+        if choice not in ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10"]:
             continue  # Skip back to start of loop if invalid input
 
-        if choice == "8":
-            console.clear()
-            break
-
-        elif choice == "1":
+        if choice == "1":
             new_level_input = display_input_prompt("Level Editor", "Enter New Level", file_path, "level")
             try:
                 new_level = int(new_level_input)
@@ -556,12 +579,19 @@ def main():
                 if not success:
                     console.print(message)
 
+        elif choice == "6":
+            console.clear()
+            success, message = update_profile(file_path, tools=ToolsCases)
+            if not success:
+                console.print(message)
+
         elif choice == "7":
             console.clear()
-            data = read_json_file(file_path)
-            write_json_file(file_path, data)
+            success, message = update_profile(file_path, weapons=Weapons)
+            if not success:
+                console.print(message)
 
-        elif choice == "6":
+        elif choice == "8":
             console.clear()
             level, xp, money, prestige_rank = get_current_values(file_path)
             if level is not None:
@@ -584,6 +614,15 @@ def main():
             # Calculate the padding to center the input prompt
             print_centered_prompt("[bold cyan]Press Enter to go back [/bold cyan]")
             console.input()
+
+        elif choice == "9":
+            console.clear()
+            data = read_json_file(file_path)
+            write_json_file(file_path, data)
+
+        elif choice == "10":
+            console.clear()
+            break
 
 
 if __name__ == "__main__":
